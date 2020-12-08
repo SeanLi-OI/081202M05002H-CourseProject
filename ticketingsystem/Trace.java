@@ -23,15 +23,15 @@ class ThreadId {
 }
 
 public class Trace {
-	final static int threadnum = 1;
-	final static int routenum = 3; // route is designed from 1 to 3
-	final static int coachnum = 3; // coach is arranged from 1 to 5
-	final static int seatnum = 3; // seat is allocated from 1 to 20
-	final static int stationnum = 3; // station is designed from 1 to 5
+	final static int threadnum = 64;
+	final static int routenum = 20; // route is designed from 1 to 3
+	final static int coachnum = 10; // coach is arranged from 1 to 5
+	final static int seatnum = 100; // seat is allocated from 1 to 20
+	final static int stationnum = 16; // station is designed from 1 to 5
 
-	final static int testnum = 3000;
-	final static int retpc = 30; // return ticket operation is 10% percent
-	final static int buypc = 60; // buy ticket operation is 30% percent
+	final static int testnum = 100000;
+	final static int retpc = 10; // return ticket operation is 10% percent
+	final static int buypc = 20; // buy ticket operation is 30% percent
 	final static int inqpc = 100; //inquiry ticket operation is 60% percent
 	
 	static String passengerName() {
@@ -62,22 +62,22 @@ public class Trace {
             			int sel = rand.nextInt(inqpc);
             			if (0 <= sel && sel < retpc && soldTicket.size() > 0) { // return ticket
             				int select = rand.nextInt(soldTicket.size());
-						long preTime = System.nanoTime() - startTime;
+						// long preTime = System.nanoTime() - startTime;
            				if ((ticket = soldTicket.remove(select)) != null) {
-								preTime = System.nanoTime() - startTime;
+								// preTime = System.nanoTime() - startTime;
             					if (tds.refundTicket(ticket)) {
-    								long postTime = System.nanoTime() - startTime;
-            						System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketRefund" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach  + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
+    								// long postTime = System.nanoTime() - startTime;
+            						// System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketRefund" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach  + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
             						//System.out.println(preTime + " " + ThreadId.get() + " " + "TicketRefund" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach  + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
             						//System.out.flush();
             					} else {
-    								long postTime = System.nanoTime() - startTime;
-            						System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "ErrOfRefund");
+    								// long postTime = System.nanoTime() - startTime;
+            						// System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "ErrOfRefund");
             						//System.out.flush();
             					}
             				} else {
-								long postTime = System.nanoTime() - startTime;
-            					System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "ErrOfRefund");
+								// long postTime = System.nanoTime() - startTime;
+            					// System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "ErrOfRefund");
         						//System.out.flush();
             				}
             			} else if (retpc <= sel && sel < buypc) { // buy ticket
@@ -85,16 +85,16 @@ public class Trace {
             				int route = rand.nextInt(routenum) + 1;
             				int departure = rand.nextInt(stationnum - 1) + 1;
             				int arrival = departure + rand.nextInt(stationnum - departure) + 1; // arrival is always greater than departure
-							long preTime = System.nanoTime() - startTime;
+							// long preTime = System.nanoTime() - startTime;
             				if ((ticket = tds.buyTicket(passenger, route, departure, arrival)) != null) {
-								long postTime = System.nanoTime() - startTime;
-            					System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketBought" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
+								// long postTime = System.nanoTime() - startTime;
+            					// System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketBought" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
             					//System.out.println(preTime + " " + ThreadId.get() + " " + "TicketBought" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
             					soldTicket.add(ticket);
         						//System.out.flush();
             				} else {
-								long postTime = System.nanoTime() - startTime;
-            					System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketSoldOut" + " " + route + " " + departure+ " " + arrival);
+								// long postTime = System.nanoTime() - startTime;
+            					// System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketSoldOut" + " " + route + " " + departure+ " " + arrival);
             					//System.out.println(preTime + " " + ThreadId.get() + " " + "TicketSoldOut" + " " + route + " " + departure+ " " + arrival);
         						//System.out.flush();
             				}
@@ -105,8 +105,8 @@ public class Trace {
             				int arrival = departure + rand.nextInt(stationnum - departure) + 1; // arrival is always greater than departure
 							long preTime = System.nanoTime() - startTime;
             				int leftTicket = tds.inquiry(route, departure, arrival);
-							long postTime = System.nanoTime() - startTime;
-            				System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "RemainTicket" + " " + leftTicket + " " + route+ " " + departure+ " " + arrival);
+							// long postTime = System.nanoTime() - startTime;
+            				// System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "RemainTicket" + " " + leftTicket + " " + route+ " " + departure+ " " + arrival);
             				//System.out.println(preTime + " " + ThreadId.get() + " " + "RemainTicket" + " " + leftTicket + " " + route+ " " + departure+ " " + arrival);
     						//System.out.flush();  
     						         			
@@ -120,6 +120,7 @@ public class Trace {
 	
 	    for (int i = 0; i< threadnum; i++) {
 	    	threads[i].join();
-	    }		
+		}		
+		System.out.println(Long.toString(System.nanoTime()-startTime));
 	}
 }
