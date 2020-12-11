@@ -42,7 +42,7 @@ public class RouteDS {
         int[] coachAndSeat = new int[2];
         int[] oldStatus = new int[stationNum];
         int[] newStatus = new int[stationNum];
-        Lock readLock=cacheRwLock[index].readLock();
+        Lock readLock = cacheRwLock[index].readLock();
         Lock writeLock;
         readLock.lock();
         try {
@@ -53,26 +53,16 @@ public class RouteDS {
         }
 
         for (; i < seats.length; i++) {
-            boolean isAvailable;
-            readLock=seatsRwLock[i].readLock();
-            readLock.lock();
-            try {
-                isAvailable = seats[i].isAvailable(departure, arrival);
-                if (isAvailable)
-                    oldStatus = Arrays.copyOf(seats[i].cache, seats[i].cache.length);
-            } finally {
-                readLock.unlock();
-            }
-            if (isAvailable) {
-                writeLock=seatsRwLock[i].writeLock();
-                writeLock.lock();
+            if (seats[i].isAvailable(departure, arrival)) {
+                readLock = seatsRwLock[i].readLock();
+                readLock.lock();
                 try {
-                    isAvailable = seats[i].hold(departure, arrival);
+                    oldStatus = Arrays.copyOf(seats[i].cache, seats[i].cache.length);
                 } finally {
-                    writeLock.unlock();
+                    readLock.unlock();
                 }
-                if (isAvailable) {
-                    writeLock=tidRwLock.writeLock();
+                if (seats[i].hold(departure, arrival)) {
+                    writeLock = tidRwLock.writeLock();
                     writeLock.lock();
                     try {
                         tidNum = tid++;
@@ -88,7 +78,7 @@ public class RouteDS {
             return null;
 
         int value;
-        readLock=cacheRwLock[index].readLock();
+        readLock = cacheRwLock[index].readLock();
         readLock.lock();
         try {
             value = cache[index];
@@ -98,18 +88,11 @@ public class RouteDS {
         if (value != -1)
             count = value - 1;
         else
-            for (int j = i + 1; j < seats.length; j++) {
-                readLock=seatsRwLock[j].readLock();
-                readLock.lock();
-                try {
-                    if (seats[j].isAvailable(departure, arrival))
-                        count++;
-                } finally {
-                    readLock.unlock();
-                }
-            }
+            for (int j = i + 1; j < seats.length; j++)
+                if (seats[j].isAvailable(departure, arrival))
+                    count++;
 
-        readLock=seatsRwLock[i].readLock();
+        readLock = seatsRwLock[i].readLock();
         readLock.lock();
         try {
             newStatus = Arrays.copyOf(seats[i].cache, seats[i].cache.length);
@@ -118,7 +101,7 @@ public class RouteDS {
         }
         updateCache(oldStatus, newStatus, false);
 
-        writeLock=cacheRwLock[index].writeLock();
+        writeLock = cacheRwLock[index].writeLock();
         writeLock.lock();
         try {
             cache[index] = count;
@@ -141,14 +124,8 @@ public class RouteDS {
             return value;
         int count = 0;
         for (int i = 0; i < seats.length; i++) {
-            readLock = seatsRwLock[i].readLock();
-            readLock.lock();
-            try {
-                if (seats[i].isAvailable(departure, arrival))
-                    count++;
-            } finally {
-                readLock.unlock();
-            }
+            if (seats[i].isAvailable(departure, arrival))
+                count++;
         }
         return count;
     }
@@ -164,15 +141,7 @@ public class RouteDS {
         } finally {
             readLock.unlock();
         }
-        boolean isSuccess;
-        Lock writeLock = seatsRwLock[seatNo].writeLock();
-        writeLock.lock();
-        try {
-            isSuccess = seats[seatNo].unhold(departure, arrival);
-        } finally {
-            writeLock.unlock();
-        }
-        if (isSuccess) {
+        if (seats[seatNo].unhold(departure, arrival)) {
             readLock = seatsRwLock[seatNo].readLock();
             readLock.lock();
             try {
