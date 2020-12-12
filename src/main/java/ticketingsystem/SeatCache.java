@@ -1,5 +1,7 @@
 package ticketingsystem;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.atomic.AtomicStampedReference;
@@ -43,15 +45,15 @@ public class SeatCache {
         return value;
     }
 
-    final public void updateCache(int departure, int arrival, Status w, boolean flag) {
+    final public void updateCache(int departure, int arrival, int w[], boolean flag) {
         Lock writeLock = cacheRwLock.writeLock();
         writeLock.lock();
         try {
             int oldTag = tag.getReference();
             int newTag = 1 - oldTag;
             int index = 0;
-            int oldStatus = w.oldStatus;
-            int newStatus = w.newStatus;
+            int oldStatus = w[0];
+            int newStatus = w[1];
             int temp;
             if (flag) {
                 for (int i = 0; i < stationNum; i++) {

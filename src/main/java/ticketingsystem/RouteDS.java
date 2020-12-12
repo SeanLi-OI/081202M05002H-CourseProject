@@ -18,12 +18,13 @@ public class RouteDS {
     }
 
     public int[] buyTicket(int departure, int arrival) {
-        Status statusWrap = new Status(0, 0);
+        int status[];
         while (seatCache.countSeat(departure, arrival) > 0) {
             for (int i = 0; i < seatsNum; i++) {
                 while (seats[i].isAvailable(departure, arrival)) {
-                    if (seats[i].hold(departure, arrival, statusWrap)) {
-                        seatCache.updateCache(departure, arrival, statusWrap, false);
+                    status = seats[i].hold(departure, arrival);
+                    if (status != null) {
+                        seatCache.updateCache(departure, arrival, status, false);
                         return new int[] { i / seatNum + 1, i % seatNum + 1 };
                     }
                 }
@@ -38,12 +39,11 @@ public class RouteDS {
 
     public boolean refund(Ticket ticket, int departure, int arrival) {
         int seatNo = (ticket.coach - 1) * coachNum + ticket.seat - 1;
-        Status statusWrap = new Status(0, 0);
-        while(true){
-            if (seats[seatNo].unhold(departure, arrival, statusWrap)) {
-                seatCache.updateCache(departure, arrival, statusWrap, true);
-                return true;
-            }
+        int status[] = seats[seatNo].unhold(departure, arrival);
+        if (status != null) {
+            seatCache.updateCache(departure, arrival, status, true);
+            return true;
         }
+        return false;
     }
 }

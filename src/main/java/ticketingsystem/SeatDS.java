@@ -9,16 +9,15 @@ public class SeatDS {
         status = new AtomicInteger((1 << stationNum) - 1);
     }
 
-    public boolean hold(int departure, int arrival, Status w) {
+    public int[] hold(int departure, int arrival) {
         int oldStatus, newStatus;
         do {
             oldStatus = status.get();
             if (((oldStatus >> departure) & ((1 << (arrival - departure)) - 1)) != ((1 << (arrival - departure)) - 1))
-                return false;
+                return null;
             newStatus = oldStatus & (~(((1 << (arrival - departure)) - 1) << departure));
         } while (!status.compareAndSet(oldStatus, newStatus));
-        w = new Status(oldStatus, newStatus);
-        return true;
+        return new int[] { oldStatus, newStatus };
     }
 
     public boolean isAvailable(int departure, int arrival) {
@@ -26,13 +25,12 @@ public class SeatDS {
         return ((status.get() >> departure) & ((1 << (arrival - departure)) - 1)) == ((1 << (arrival - departure)) - 1);
     }
 
-    public boolean unhold(int departure, int arrival, Status w) {
+    public int[] unhold(int departure, int arrival) {
         int oldStatus, newStatus;
         do {
             oldStatus = status.get();
             newStatus = oldStatus | (((1 << (arrival - departure)) - 1) << departure);
         } while (!status.compareAndSet(oldStatus, newStatus));
-        w = new Status(oldStatus, newStatus);
-        return true;
+        return new int[] { oldStatus, newStatus };
     }
 }
