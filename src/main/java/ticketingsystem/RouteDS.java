@@ -39,10 +39,11 @@ public class RouteDS {
     public boolean refund(Ticket ticket, int departure, int arrival) {
         int seatNo = (ticket.coach - 1) * coachNum + ticket.seat - 1;
         Status statusWrap = new Status(0, 0);
-        if (seats[seatNo].unhold(departure, arrival, statusWrap)) {
-            seatCache.updateCache(departure, arrival, statusWrap, true);
-            return true;
+        while(true){
+            if (seats[seatNo].unhold(departure, arrival, statusWrap)) {
+                seatCache.updateCache(departure, arrival, statusWrap, true);
+                return true;
+            }
         }
-        return false;
     }
 }

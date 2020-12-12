@@ -24,7 +24,7 @@ public class TicketingDS implements TicketingSystem {
         tidNum = new AtomicLong(0);
         for (int i = 1; i <= routenum; i++)
             this.rous[i] = new RouteDS(this.coachnum, this.seatnum, this.stationnum);
-        hasAllot = new ConcurrentHashMap<>(1 << 22);
+        hasAllot = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -71,7 +71,7 @@ public class TicketingDS implements TicketingSystem {
     }
 
     public boolean checkRequest(int route, int departure, int arrival) {
-        return route < 1 || route > this.routenum || departure < 1 || departure >= this.stationnum || arrival <= 1
-                || arrival > this.stationnum || arrival < departure;
+        return route < 1 || route > this.routenum || departure < 1 || departure > this.stationnum || arrival < 1
+                || arrival > this.stationnum || arrival <= departure;
     }
 }
