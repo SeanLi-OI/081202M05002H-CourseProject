@@ -1,16 +1,18 @@
 package ticketingsystem;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TicketingDS implements TicketingSystem {
-    public int routenum;
-    public int coachnum;
-    public int seatnum;
-    public int stationnum;
-    public int threadnum;
+    private int routenum;
+    private int coachnum;
+    private int seatnum;
+    private int stationnum;
+    private int threadnum;
 
-    public RouteDS[] rous;
-    public static ConcurrentHashMap<Long, Boolean> hasAllot;
+    private RouteDS[] rous;
+    private static ConcurrentHashMap<Long, Ticket> hasAllot;
+    private AtomicLong tidNum;
 
     public TicketingDS(int routenum, int coachnum, int seatnum, int stationnum, int threadnum) {
         this.routenum = (routenum == 0) ? 5 : routenum;
@@ -19,9 +21,10 @@ public class TicketingDS implements TicketingSystem {
         this.stationnum = (stationnum == 0) ? 10 : stationnum;
         this.threadnum = (threadnum == 0) ? 16 : threadnum;
         this.rous = new RouteDS[routenum + 1];
+        tidNum = new AtomicLong(0);
         for (int i = 1; i <= routenum; i++)
             this.rous[i] = new RouteDS(this.coachnum, this.seatnum, this.stationnum);
-        hasAllot = new ConcurrentHashMap<>();
+        hasAllot = new ConcurrentHashMap<>(1 << 22);
     }
 
     @Override
@@ -31,14 +34,14 @@ public class TicketingDS implements TicketingSystem {
         int[] res = rous[route].buyTicket(departure - 1, arrival - 1);
         if (res != null) {
             Ticket ticket = new Ticket();
-            ticket.tid = res[0] * this.routenum + route;
-            ticket.coach = res[1];
-            ticket.seat = res[2];
+            ticket.tid = tidNum.incrementAndGet();
+            ticket.coach = res[0];
+            ticket.seat = res[1];
             ticket.passenger = passenger;
             ticket.route = route;
             ticket.departure = departure;
             ticket.arrival = arrival;
-            hasAllot.put(ticket.tid, true);
+            hasAllot.put(ticket.tid, ticket);
             return ticket;
         }
         return null;
@@ -51,9 +54,20 @@ public class TicketingDS implements TicketingSystem {
 
     @Override
     public boolean refundTicket(Ticket ticket) {
-        return hasAllot.remove(ticket.tid) != null
-                ? rous[ticket.route].refund(ticket, ticket.departure - 1, ticket.arrival - 1)
-                : false;
+        if (!hasAllot.containsKey(ticket.tid) || !ticketEquals(ticket, hasAllot.get(ticket.tid)))
+            return false;
+        hasAllot.remove(ticket.tid, ticket);
+        return rous[ticket.route].refund(ticket, ticket.departure - 1, ticket.arrival - 1);
+    }
+
+    private final boolean ticketEquals(Ticket x, Ticket y) {
+        if (x == y)
+            return true;
+        if (x == null || y == null)
+            return false;
+
+        return ((x.tid == y.tid) && (x.passenger.equals(y.passenger)) && (x.route == y.route) && (x.coach == y.coach)
+                && (x.seat == y.seat) && (x.departure == y.departure) && (x.arrival == y.arrival));
     }
 
     public boolean checkRequest(int route, int departure, int arrival) {
