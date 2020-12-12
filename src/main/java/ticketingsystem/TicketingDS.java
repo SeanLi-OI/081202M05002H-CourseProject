@@ -21,7 +21,7 @@ public class TicketingDS implements TicketingSystem {
         this.rous = new RouteDS[routenum + 1];
         for (int i = 1; i <= routenum; i++)
             this.rous[i] = new RouteDS(this.coachnum, this.seatnum, this.stationnum);
-        hasAllot = new ConcurrentHashMap<>(1 << 22);
+        hasAllot = new ConcurrentHashMap<>();
     }
 
     @Override
