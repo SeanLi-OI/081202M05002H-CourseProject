@@ -10,13 +10,14 @@ public class SeatDS {
     }
 
     public boolean hold(int departure, int arrival, Status w) {
+        int oldStatus, newStatus;
         do {
-            w.oldStatus = status.get();
-            if (((w.oldStatus >> departure) & ((1 << (arrival - departure)) - 1)) != ((1 << (arrival - departure)) - 1))
+            oldStatus = status.get();
+            if (((oldStatus >> departure) & ((1 << (arrival - departure)) - 1)) != ((1 << (arrival - departure)) - 1))
                 return false;
-            w.newStatus = w.oldStatus & (~(((1 << (arrival - departure)) - 1) << departure));
-        } while (!status.compareAndSet(w.oldStatus, w.newStatus));
-        w = new Status(w.oldStatus, w.newStatus);
+            newStatus = oldStatus & (~(((1 << (arrival - departure)) - 1) << departure));
+        } while (!status.compareAndSet(oldStatus, newStatus));
+        w = new Status(oldStatus, newStatus);
         return true;
     }
 
@@ -26,11 +27,12 @@ public class SeatDS {
     }
 
     public boolean unhold(int departure, int arrival, Status w) {
+        int oldStatus, newStatus;
         do {
-            w.oldStatus = status.get();
-            w.newStatus = w.oldStatus | (((1 << (arrival - departure)) - 1) << departure);
-        } while (!status.compareAndSet(w.oldStatus, w.newStatus));
-        w = new Status(w.oldStatus, w.newStatus);
+            oldStatus = status.get();
+            newStatus = oldStatus | (((1 << (arrival - departure)) - 1) << departure);
+        } while (!status.compareAndSet(oldStatus, newStatus));
+        w = new Status(oldStatus, newStatus);
         return true;
     }
 }
