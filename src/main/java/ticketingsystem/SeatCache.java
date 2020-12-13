@@ -10,9 +10,11 @@ public class SeatCache {
     public int coachNum;
     public int seatNum;
     public int stationNum;
-    public int[][] cache;
-    private AtomicStampedReference<Integer> tag;
-    private ReadWriteLock cacheRwLock;
+    public final int[][] cache;
+    private final AtomicStampedReference<Integer> tag;
+    private final ReadWriteLock cacheRwLock=new ReentrantReadWriteLock(true);
+    private final Lock cacheReadLock=cacheRwLock.readLock();
+    private final Lock cacheWriteLock=cacheRwLock.writeLock();
 
     public SeatCache(int coachNum, int seatNum, int stationNum) {
         cache = new int[2][];
@@ -20,32 +22,28 @@ public class SeatCache {
         this.stationNum = stationNum;
         for (int i = 0; i < 2; i++) {
             cache[i] = new int[stationNum * stationNum];
+            Arrays.fill(cache[i], coachNum * seatNum);
         }
-        Arrays.fill(cache[0], coachNum * seatNum);
-        cacheRwLock = new ReentrantReadWriteLock(true);
     }
 
     public int countSeat(int departure, int arrival) {
         int oldTimestamp, oldTag;
         int value;
-        Lock readLock;
         do {
             oldTimestamp = tag.getStamp();
             oldTag = tag.getReference();
-            readLock = cacheRwLock.readLock();
-            readLock.lock();
-            try {
+            // cacheReadLock.lock();
+            // try {
                 value = cache[oldTag][departure * stationNum + arrival];
-            } finally {
-                readLock.unlock();
-            }
+            // } finally {
+            //     cacheReadLock.unlock();
+            // }
         } while (!tag.compareAndSet(oldTag, oldTag, oldTimestamp, oldTimestamp));
         return value;
     }
 
     final public void updateCache(int departure, int arrival, int w[], boolean flag) {
-        Lock writeLock = cacheRwLock.writeLock();
-        writeLock.lock();
+        cacheWriteLock.lock();
         try {
             int oldTag = tag.getReference();
             int newTag = 1 - oldTag;
@@ -54,14 +52,12 @@ public class SeatCache {
             int newStatus = w[1];
             int temp;
             if (flag) {
-                for (int i = 0; i < stationNum; i++) {
+                for (int i = 0; i < arrival; i++) {
                     index = index + i + 1;
                     temp = 1;
                     for (int j = i + 1; j < stationNum; j++) {
-                        if (((oldStatus & temp) != temp) && ((newStatus & temp) == temp))
+                        if  (((oldStatus & temp) != temp) &&((newStatus & temp) == temp))
                             cache[newTag][index] = ++cache[oldTag][index];
-                        else
-                            cache[newTag][index] = cache[oldTag][index];
                         index++;
                         temp = (temp << 1) | 1;
                     }
@@ -69,14 +65,12 @@ public class SeatCache {
                     newStatus >>= 1;
                 }
             } else {
-                for (int i = 0; i < stationNum; i++) {
+                for (int i = 0; i < arrival; i++) {
                     index = index + i + 1;
                     temp = 1;
                     for (int j = i + 1; j < stationNum; j++) {
-                        if (((oldStatus & temp) == temp) && ((newStatus & temp) != temp))
+                        if  (((oldStatus & temp) == temp) &&((newStatus & temp) != temp))
                             cache[newTag][index] = --cache[oldTag][index];
-                        else
-                            cache[newTag][index] = cache[oldTag][index];
                         index++;
                         temp = (temp << 1) | 1;
                     }
@@ -86,7 +80,7 @@ public class SeatCache {
             }
             tag.set(newTag, tag.getStamp() + 1);
         } finally {
-            writeLock.unlock();
+            cacheWriteLock.unlock();
         }
     }
 }

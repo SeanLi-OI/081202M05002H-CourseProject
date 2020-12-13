@@ -4,26 +4,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TicketingDS implements TicketingSystem {
-    private int routenum;
-    private int coachnum;
-    private int seatnum;
-    private int stationnum;
-    private int threadnum;
+    private int routeNum;
+    private int coachNum;
+    private int seatNum;
+    private int stationNum;
+    private int threadNum;
 
     private RouteDS[] rous;
     private static ConcurrentHashMap<Long, Ticket> hasAllot;
     private AtomicLong tidNum;
+    private int seatNums;
 
-    public TicketingDS(int routenum, int coachnum, int seatnum, int stationnum, int threadnum) {
-        this.routenum = (routenum == 0) ? 5 : routenum;
-        this.coachnum = (coachnum == 0) ? 8 : coachnum;
-        this.seatnum = (seatnum == 0) ? 100 : seatnum;
-        this.stationnum = (stationnum == 0) ? 10 : stationnum;
-        this.threadnum = (threadnum == 0) ? 16 : threadnum;
-        this.rous = new RouteDS[routenum + 1];
+    public TicketingDS(int routeNum, int coachNum, int seatNum, int stationNum, int threadNum) {
+        this.routeNum = (routeNum == 0) ? 5 : routeNum;
+        this.coachNum = (coachNum == 0) ? 8 : coachNum;
+        this.seatNum = (seatNum == 0) ? 100 : seatNum;
+        this.stationNum = (stationNum == 0) ? 10 : stationNum;
+        this.threadNum = (threadNum == 0) ? 16 : threadNum;
+        rous = new RouteDS[routeNum + 1];
         tidNum = new AtomicLong(0);
-        for (int i = 1; i <= routenum; i++)
-            this.rous[i] = new RouteDS(this.coachnum, this.seatnum, this.stationnum);
+        for (int i = 1; i <= routeNum; i++)
+            rous[i] = new RouteDS(coachNum, seatNum, stationNum);
         hasAllot = new ConcurrentHashMap<>();
     }
 
@@ -68,7 +69,7 @@ public class TicketingDS implements TicketingSystem {
     }
 
     public boolean checkRequest(int route, int departure, int arrival) {
-        return route < 1 || route > this.routenum || departure < 1 || departure > this.stationnum || arrival < 1
-                || arrival > this.stationnum || arrival <= departure;
+        return route < 1 || route > this.routeNum || departure < 1 || departure > this.stationNum || arrival < 1
+                || arrival > this.stationNum || arrival <= departure;
     }
 }
