@@ -1,7 +1,5 @@
 package ticketingsystem;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.atomic.AtomicStampedReference;

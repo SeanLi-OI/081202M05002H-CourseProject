@@ -38,7 +38,7 @@ public class RouteDS {
     }
 
     public boolean refund(Ticket ticket, int departure, int arrival) {
-        int seatNo = (ticket.coach - 1) * coachNum + ticket.seat - 1;
+        int seatNo = (ticket.coach - 1) * seatNum + ticket.seat - 1;
         int status[] = seats[seatNo].unhold(departure, arrival);
         if (status != null) {
             seatCache.updateCache(departure, arrival, status, true);
