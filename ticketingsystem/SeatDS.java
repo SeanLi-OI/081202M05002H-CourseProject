@@ -1,9 +1,6 @@
 package ticketingsystem;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class SeatDS {
     private AtomicInteger status;
@@ -12,26 +9,30 @@ public class SeatDS {
         status = new AtomicInteger((1 << stationNum) - 1);
     }
 
-    public boolean hold(int departure, int arrival, Status w) {
+    public int[] hold(int departure, int arrival) {
+        int oldStatus;
+        int newStatus;
         do {
-            w.oldStatus = status.get();
-            if (((w.oldStatus>>departure) & ((1<<(arrival-departure))-1))!=((1<<(arrival-departure))-1))
-                return false;
-            w.newStatus = w.oldStatus & (~(((1 << (arrival - departure)) - 1) << departure));
-        } while (!this.status.compareAndSet(w.oldStatus, w.newStatus));
-        return true;
+            oldStatus = status.get();
+            if (((oldStatus >> departure) & ((1 << (arrival - departure)) - 1)) != ((1 << (arrival - departure)) - 1))
+                return null;
+            newStatus = oldStatus & (~(((1 << (arrival - departure)) - 1) << departure));
+        } while (!status.compareAndSet(oldStatus, newStatus));
+        return new int[] { oldStatus, newStatus };
     }
 
     public boolean isAvailable(int departure, int arrival) {
-        
-        return ((status.get()>>departure) & ((1<<(arrival-departure))-1))==((1<<(arrival-departure))-1);
+
+        return ((status.get() >> departure) & ((1 << (arrival - departure)) - 1)) == ((1 << (arrival - departure)) - 1);
     }
 
-    public boolean unhold(int departure, int arrival, Status w) {
+    public int[] unhold(int departure, int arrival) {
+        int oldStatus;
+        int newStatus;
         do {
-            w.oldStatus = status.get();
-            w.newStatus = w.oldStatus | (((1 << (arrival - departure)) - 1) << departure);
-        } while (!this.status.compareAndSet(w.oldStatus, w.newStatus));
-        return true;
+            oldStatus = status.get();
+            newStatus = oldStatus | (((1 << (arrival - departure)) - 1) << departure);
+        } while (!status.compareAndSet(oldStatus, newStatus));
+        return new int[] { oldStatus, newStatus };
     }
 }

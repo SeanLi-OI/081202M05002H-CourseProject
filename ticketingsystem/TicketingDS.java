@@ -1,27 +1,29 @@
 package ticketingsystem;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TicketingDS implements TicketingSystem {
-    public int routenum;
-    public int coachnum;
-    public int seatnum;
-    public int stationnum;
-    public int threadnum;
+    private int routeNum;
+    private int coachNum;
+    private int seatNum;
+    private int stationNum;
+    private int threadNum;
 
-    public RouteDS[] rous;
-    public static ConcurrentHashMap<Long, Boolean> hasAllot;
+    private RouteDS[] rous;
+    private static ConcurrentHashMap<Long, Ticket> hasAllot = new ConcurrentHashMap<>();
+    private AtomicLong tidNum;
 
-    public TicketingDS(int routenum, int coachnum, int seatnum, int stationnum, int threadnum) {
-        this.routenum = (routenum == 0) ? 5 : routenum;
-        this.coachnum = (coachnum == 0) ? 8 : coachnum;
-        this.seatnum = (seatnum == 0) ? 100 : seatnum;
-        this.stationnum = (stationnum == 0) ? 10 : stationnum;
-        this.threadnum = (threadnum == 0) ? 16 : threadnum;
-        this.rous = new RouteDS[routenum + 1];
-        for (int i = 1; i <= routenum; i++)
-            this.rous[i] = new RouteDS(this.coachnum, this.seatnum, this.stationnum);
-        hasAllot = new ConcurrentHashMap<>(1 << 22);
+    public TicketingDS(int routeNum, int coachNum, int seatNum, int stationNum, int threadNum) {
+        this.routeNum = (routeNum == 0) ? 5 : routeNum;
+        this.coachNum = (coachNum == 0) ? 8 : coachNum;
+        this.seatNum = (seatNum == 0) ? 100 : seatNum;
+        this.stationNum = (stationNum == 0) ? 10 : stationNum;
+        this.threadNum = (threadNum == 0) ? 16 : threadNum;
+        rous = new RouteDS[this.routeNum + 1];
+        tidNum = new AtomicLong(0);
+        for (int i = 1; i <= this.routeNum; i++)
+            rous[i] = new RouteDS(this.coachNum, this.seatNum, this.stationNum);
     }
 
     @Override
@@ -31,14 +33,14 @@ public class TicketingDS implements TicketingSystem {
         int[] res = rous[route].buyTicket(departure - 1, arrival - 1);
         if (res != null) {
             Ticket ticket = new Ticket();
-            ticket.tid = res[0] * this.routenum + route;
-            ticket.coach = res[1];
-            ticket.seat = res[2];
+            ticket.tid = tidNum.incrementAndGet();
+            ticket.coach = res[0];
+            ticket.seat = res[1];
             ticket.passenger = passenger;
             ticket.route = route;
             ticket.departure = departure;
             ticket.arrival = arrival;
-            hasAllot.put(ticket.tid, true);
+            hasAllot.put(ticket.tid, ticket);
             return ticket;
         }
         return null;
@@ -46,18 +48,28 @@ public class TicketingDS implements TicketingSystem {
 
     @Override
     public int inquiry(int route, int departure, int arrival) {
-        return checkRequest(route, departure, arrival) ? -1 : rous[route].inquiry(departure - 1, arrival - 1);
+        if (checkRequest(route, departure, arrival))
+            return 0;
+        return rous[route].inquiry(departure - 1, arrival - 1);
     }
 
     @Override
     public boolean refundTicket(Ticket ticket) {
-        return hasAllot.remove(ticket.tid) != null
-                ? rous[ticket.route].refund(ticket, ticket.departure - 1, ticket.arrival - 1)
-                : false;
+        if (!hasAllot.containsKey(ticket.tid) || !ticketEquals(ticket, hasAllot.get(ticket.tid)))
+            return false;
+        hasAllot.remove(ticket.tid, ticket);
+        return rous[ticket.route].refund(ticket, ticket.departure - 1, ticket.arrival - 1);
     }
 
-    public boolean checkRequest(int route, int departure, int arrival) {
-        return route < 1 || route > this.routenum || departure < 1 || departure >= this.stationnum || arrival <= 1
-                || arrival > this.stationnum || arrival < departure;
+    private final boolean ticketEquals(Ticket x, Ticket y) {
+        if (x == null || y == null)
+            return false;
+        return ((x.tid == y.tid) && (x.passenger.equals(y.passenger)) && (x.route == y.route) && (x.coach == y.coach)
+                && (x.seat == y.seat) && (x.departure == y.departure) && (x.arrival == y.arrival));
+    }
+
+    private final boolean checkRequest(int route, int departure, int arrival) {
+        return route < 1 || route > this.routeNum || departure < 1 || departure > this.stationNum || arrival < 1
+                || arrival > this.stationNum || arrival <= departure;
     }
 }
